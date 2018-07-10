@@ -1,5 +1,5 @@
 /*******************************************************************************************************/
-// PRINCESS v 0.0.110 - PUBLIC
+// PRINCESS v 0.0.110
 /*******************************************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
@@ -1302,6 +1302,14 @@ void PRINCESS_init_preboot(struct PRINCESS_ctx* ctx, const uint8_t* password, in
                   (((uint64_t)((hash)[4] & 0xFF)) << 24) | (((uint64_t)((hash)[5] & 0xFF)) << 16) | \
                   (((uint64_t)((hash)[6] & 0xFF)) <<  8) | (((uint64_t)((hash)[7] & 0xFF))));
 
+
+  memset(p_sbox, 0, 256);
+  memset(f_sbox, 0, 256);
+  memset(i_sbox, 0, 256);
+  uint8_t byte = (sha3_bytes64 & 0xFF );
+  gen_sbox(byte, p_sbox);
+
+
   uint32_t sha3_bytes32[2];
   sha3_bytes32[0] = sha3_bytes64 >> 32; 
   sha3_bytes32[1] = sha3_bytes64 & 0xFFFFFFFF;
@@ -1309,12 +1317,6 @@ void PRINCESS_init_preboot(struct PRINCESS_ctx* ctx, const uint8_t* password, in
   uint32_t sha3_m = sha3_bytes32[0];
   uint32_t sha3_x = sha3_bytes32[1];
   uint32_t sha3_o = XBOX_MUTATE_2D(sha3_m,sha3_x);
-
-  memset(p_sbox, 0, 256);
-  memset(f_sbox, 0, 256);
-  memset(i_sbox, 0, 256);
-  uint8_t byte = (sha3_o & 0xFF );
-  gen_sbox(byte, p_sbox);
 
   int sha3_i, sha3_j;
   int sha3_len = (4096 + (sha3_o % 1747));
