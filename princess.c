@@ -1,5 +1,5 @@
 /*******************************************************************************************************/
-// PRINCESS v 0.0.111 - PUBLIC
+// PRINCESS v 0.0.112 - PUBLIC
 /*******************************************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
@@ -178,6 +178,10 @@ uint64_t BLUEPRNG2(void) { // xorshift128starstar
 /*******************************************************************************************************/
 #define ROTL8(x,shift) ((uint8_t) ((x) << (shift)) | ((x) >> (8 - (shift))))
 #define ROTR8(x,shift) ((uint8_t) ((x) >> (shift)) | ((x) << (8 - (shift))))
+
+/*******************************************************************************************************/
+#define ROTL32(X, R) (((X) << ((R) & 31)) | ((X) >> (32 - ((R) & 31))))
+#define ROTR32(X, R) (((X) >> ((R) & 31)) | ((X) << (32 - ((R) & 31))))
 /*******************************************************************************************************/
 // csbox[11][4][256] // [0] Euler Constant, [1] Catalan G, [2] Gamma(1_4), [3] Lemniscate, [4] Log(10), [5] Log(2), [6] PI, [7] E, [8] PHI, [9] SQRT(3), [10] SQRT(2)
 #define CSLEN 11
@@ -189,6 +193,13 @@ uint64_t BLUEPRNG2(void) { // xorshift128starstar
   (t += csbox[((p_sbox[((x) & 0xFF)]) % CSLEN)][3][((x) & 0xFF)]))
 /*******************************************************************************************************/
 #define XBOX_3D(x,t) ( \
+  (t  = csbox[((f_sbox[scube_f[(((x) >> 24) & 0xFF) ][((x) & 0xFF)]]) % CSLEN)][0][(((x) >> 24) & 0xFF)]), \
+  (t += csbox[((f_sbox[scube_f[(((x) >> 16) & 0xFF) ][(((x) >> 8) & 0xFF)]]) % CSLEN)][1][(((x) >> 16) & 0xFF)]), \
+  (t ^= csbox[((f_sbox[scube_f[(((x) >> 8) & 0xFF) ][(((x) >> 16) & 0xFF)]]) % CSLEN)][2][(((x) >> 8) & 0xFF)]), \
+  (t += csbox[((f_sbox[scube_f[((x) & 0xFF) ][(((x) >> 24) & 0xFF)]]) % CSLEN)][3][((x) & 0xFF)]))
+
+/*******************************************************************************************************/
+#define PERVADE_4D(x,t) ( \
   (t  = csbox[((f_sbox[scube_f[(((x) >> 24) & 0xFF) ][((x) & 0xFF)]]) % CSLEN)][0][(((x) >> 24) & 0xFF)]), \
   (t += csbox[((f_sbox[scube_f[(((x) >> 16) & 0xFF) ][(((x) >> 8) & 0xFF)]]) % CSLEN)][1][(((x) >> 16) & 0xFF)]), \
   (t ^= csbox[((f_sbox[scube_f[(((x) >> 8) & 0xFF) ][(((x) >> 16) & 0xFF)]]) % CSLEN)][2][(((x) >> 8) & 0xFF)]), \
@@ -636,9 +647,9 @@ void print_qbox(uint32_t sbox[256]) {
     for (j = 0; j < 16; j++) {
       p = (i+j);
       if (j >= 15) {
-        printf("%08lX\n",sbox[p]);
+        printf("%08X\n",sbox[p]);
       } else {
-        printf("%08lX ", sbox[p]);
+        printf("%08X ", sbox[p]);
       }
     }
   }
@@ -1541,7 +1552,7 @@ void PRINCESS_init_preboot(struct PRINCESS_ctx* ctx, const uint8_t* password, in
     iv_x_bytes[30] = (aes_iv_x[7] & 0x00ff0000) >> 16;
     iv_x_bytes[31] = (aes_iv_x[7] & 0xff000000) >> 24;
 
-    if (DEBUG_KEYS) { printf("PRINCESS MYST IV X (256bit): %08lX%08lX%08lX%08lX%08lX%08lX%08lX%08lX\n", aes_iv_x[0], aes_iv_x[1], aes_iv_x[2], aes_iv_x[3], aes_iv_x[4], aes_iv_x[5], aes_iv_x[6], aes_iv_x[7]); }
+    if (DEBUG_KEYS) { printf("PRINCESS MYST IV X (256bit): %08X%08X%08X%08X%08X%08X%08X%08X\n", aes_iv_x[0], aes_iv_x[1], aes_iv_x[2], aes_iv_x[3], aes_iv_x[4], aes_iv_x[5], aes_iv_x[6], aes_iv_x[7]); }
 
     uint32_t iv_y1[2], iv_y2[2], iv_y3[2], iv_y4[2];
 
@@ -1619,7 +1630,7 @@ void PRINCESS_init_preboot(struct PRINCESS_ctx* ctx, const uint8_t* password, in
     iv_y_bytes[30] = (aes_iv_y[7] & 0x00ff0000) >> 16;
     iv_y_bytes[31] = (aes_iv_y[7] & 0xff000000) >> 24;
 
-    if (DEBUG_KEYS) { printf("PRINCESS MYST IV Y (256bit): %08lX%08lX%08lX%08lX%08lX%08lX%08lX%08lX\n", aes_iv_y[0], aes_iv_y[1], aes_iv_y[2], aes_iv_y[3], aes_iv_y[4], aes_iv_y[5], aes_iv_y[6], aes_iv_y[7]); }
+    if (DEBUG_KEYS) { printf("PRINCESS MYST IV Y (256bit): %08X%08X%08X%08X%08X%08X%08X%08X\n", aes_iv_y[0], aes_iv_y[1], aes_iv_y[2], aes_iv_y[3], aes_iv_y[4], aes_iv_y[5], aes_iv_y[6], aes_iv_y[7]); }
   }
   uint32_t key1[2], key2[2], key3[2], key4[2];
 
@@ -1681,7 +1692,7 @@ void PRINCESS_init_preboot(struct PRINCESS_ctx* ctx, const uint8_t* password, in
   key_bytes[31] = (aes_key[7] & 0xff000000) >> 24;
 
   if (DEBUG_KEYS) { 
-    printf("PRINCESS MYST KEY (256bit): %08lX%08lX%08lX%08lX%08lX%08lX%08lX%08lX\n", aes_key[0], aes_key[1], aes_key[2], aes_key[3], aes_key[4], aes_key[5], aes_key[6], aes_key[7]);
+    printf("PRINCESS MYST KEY (256bit): %08X%08X%08X%08X%08X%08X%08X%08X\n", aes_key[0], aes_key[1], aes_key[2], aes_key[3], aes_key[4], aes_key[5], aes_key[6], aes_key[7]);
     printf("\n\n");
   }
   KeyExpansion(ctx->RoundKey, key_bytes);
@@ -1702,7 +1713,7 @@ void dump_header(uint8_t* header) {
   head[5] = (header[20] | (header[21] << 8) | (header[22] << 16) | (header[23] << 24));
   head[6] = (header[24] | (header[25] << 8) | (header[26] << 16) | (header[27] << 24));
   head[7] = (header[28] | (header[29] << 8) | (header[30] << 16) | (header[31] << 24));
-  printf("HEAD (256bit): %08lX%08lX%08lX%08lX%08lX%08lX%08lX%08lX\n", head[0], head[1], head[2], head[3], head[4], head[5], head[6], head[7]);
+  printf("HEAD (256bit): %08X%08X%08X%08X%08X%08X%08X%08X\n", head[0], head[1], head[2], head[3], head[4], head[5], head[6], head[7]);
 }
 /*******************************************************************************************************/
 void dump_keys(struct PRINCESS_ctx* ctx) {
@@ -1717,7 +1728,7 @@ void dump_keys(struct PRINCESS_ctx* ctx) {
   x_iv[6] = (iv_x_bytes[24] | (iv_x_bytes[25] << 8) | (iv_x_bytes[26] << 16) | (iv_x_bytes[27] << 24));
   x_iv[7] = (iv_x_bytes[28] | (iv_x_bytes[29] << 8) | (iv_x_bytes[30] << 16) | (iv_x_bytes[31] << 24));
 
-  printf("IV X (256bit): %08lX%08lX%08lX%08lX%08lX%08lX%08lX%08lX\n", x_iv[0], x_iv[1], x_iv[2], x_iv[3], x_iv[4], x_iv[5], x_iv[6], x_iv[7]);
+  printf("IV X (256bit): %08X%08X%08X%08X%08X%08X%08X%08X\n", x_iv[0], x_iv[1], x_iv[2], x_iv[3], x_iv[4], x_iv[5], x_iv[6], x_iv[7]);
 
   uint8_t iv_y_bytes[32]; memcpy (iv_y_bytes, ctx->IV_Y, 32); uint32_t y_iv[8];
   y_iv[0] = (iv_y_bytes[0 ] | (iv_y_bytes[1 ] << 8) | (iv_y_bytes[2 ] << 16) | (iv_y_bytes[3 ] << 24));
@@ -1729,7 +1740,7 @@ void dump_keys(struct PRINCESS_ctx* ctx) {
   y_iv[6] = (iv_y_bytes[24] | (iv_y_bytes[25] << 8) | (iv_y_bytes[26] << 16) | (iv_y_bytes[27] << 24));
   y_iv[7] = (iv_y_bytes[28] | (iv_y_bytes[29] << 8) | (iv_y_bytes[30] << 16) | (iv_y_bytes[31] << 24));
 
-  printf("IV Y (256bit): %08lX%08lX%08lX%08lX%08lX%08lX%08lX%08lX\n", y_iv[0], y_iv[1], y_iv[2], y_iv[3], y_iv[4], y_iv[5], y_iv[6], y_iv[7]);
+  printf("IV Y (256bit): %08X%08X%08X%08X%08X%08X%08X%08X\n", y_iv[0], y_iv[1], y_iv[2], y_iv[3], y_iv[4], y_iv[5], y_iv[6], y_iv[7]);
 
   uint8_t key_bytes[32]; memcpy (key_bytes, ctx->RoundKey, 32); uint32_t key[8];
   key[0] = (key_bytes[0 ] | (key_bytes[1 ] << 8) | (key_bytes[2 ] << 16) | (key_bytes[3 ] << 24));
@@ -1741,7 +1752,7 @@ void dump_keys(struct PRINCESS_ctx* ctx) {
   key[6] = (key_bytes[24] | (key_bytes[25] << 8) | (key_bytes[26] << 16) | (key_bytes[27] << 24));
   key[7] = (key_bytes[28] | (key_bytes[29] << 8) | (key_bytes[30] << 16) | (key_bytes[31] << 24));
 
-  printf(" KEY (256bit): %08lX%08lX%08lX%08lX%08lX%08lX%08lX%08lX\n", key[0], key[1], key[2], key[3], key[4], key[5], key[6], key[7]);
+  printf(" KEY (256bit): %08X%08X%08X%08X%08X%08X%08X%08X\n", key[0], key[1], key[2], key[3], key[4], key[5], key[6], key[7]);
 }
 /*******************************************************************************************************/
 uint64_t CSPRNG(void) { 
@@ -1903,7 +1914,7 @@ int main(int argc, char *argv[]) {
         if ((bytes_read = fread(keyfile, 1, 8192, keyfp)) != 8192) {
           fprintf(stderr, "Error: Couldn't read from key.dat : %u\n", (unsigned) bytes_read);
           fclose(keyfp);
-          return;
+          return 1;
         }
         PRINCESS_init_preboot(&ctx,keyfile,8192,0); ctx.mode = 0;
         infp = fopen("test.dat", "r");
@@ -1935,7 +1946,7 @@ int main(int argc, char *argv[]) {
         if ((bytes_read = fread(keyfile, 1, 8192, keyfp)) != 8192) {
           fprintf(stderr, "Error: Couldn't read from key.dat : %u\n", (unsigned) bytes_read);
           fclose(keyfp);
-          return;
+          return 1;
         }      
         PRINCESS_init_preboot(&ctx,keyfile,8192,1); ctx.mode = 0;     
         infp = fopen("encrypted.dat", "r");
@@ -1943,7 +1954,7 @@ int main(int argc, char *argv[]) {
         memset(buffer, 0x00, 32);
         bytes_read = fread(buffer, 1, 1, infp);
         size_t last = (size_t)buffer[0];
-        printf("LAST BLOCK SIZE: %d\n",last);
+        printf("LAST BLOCK SIZE: %zu\n",last);
         size_t blocks_cnt = blocks(infp);
         memset(buffer, 0x00, 32);
         bytes_read = fread(buffer, 1, 32, infp);
@@ -1975,6 +1986,7 @@ int main(int argc, char *argv[]) {
         return 0;
     }
   }
+  return 0;
 }
 /*******************************************************************************************************/
 // EOF
