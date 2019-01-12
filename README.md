@@ -15,7 +15,7 @@ gcc princess.c -o p
 
 To get started generate a keyfile from command above then copy any file you want as test.dat which is the input file for encryption.
 
-A video explaining most of it https://www.facebook.com/EstellaMystagic/videos/10155886606797832/ May have to skip to the point I start talking to get a better idea. 
+A video explaining most of it https://www.youtube.com/watch?v=wxih7KXhPIM&t=119s May have to skip to the point I start talking to get a better idea. 
 
 Used block cipher mode IGE as starting point for the custom mode called MYST, this cipher uses some functions from other open source ciphers such as "blowfish, siphash" and uses SHA3 kecceh for the key expansion.
 
